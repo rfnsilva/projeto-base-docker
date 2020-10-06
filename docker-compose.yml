@@ -1,0 +1,65 @@
+version: '3'
+services:
+    db_postgres:
+        image: postgres
+        container_name: db_postgres
+        restart: always
+        ports:
+            - "5432:5432"
+        environment:
+            - POSTGRES_PASSWORD=postgres
+            - POSTGRES_USER=postgres
+            - POSTGRES_DB=login
+        networks:
+            - postgres
+
+
+    pgadmin:
+        image: dpage/pgadmin4
+        depends_on:
+          - db_postgres
+        ports:
+          - "5555:80"
+        environment:
+          PGADMIN_DEFAULT_EMAIL: pgadmin4@pgadmin.org
+          PGADMIN_DEFAULT_PASSWORD: admin
+        restart: unless-stopped
+        networks:
+            - postgres
+
+
+    backend:
+        build:
+            context: ./backend
+        container_name: backend
+        restart: always
+        depends_on:
+          - db_postgres
+        ports:
+            - "3333:3333"
+        volumes: 
+            - ./backend:/backend
+        networks:
+            - postgres
+        
+
+    frontend:
+        build:
+            context: ./frontend
+        container_name: frontend
+        restart: always
+        depends_on: 
+            - db_postgres
+            - backend
+        stdin_open: true
+        ports:
+            - "3000:3000"
+        volumes: 
+            - ./frontend:/frontend
+        networks:
+            - postgres
+            
+
+networks:
+    postgres:
+        driver: bridge
